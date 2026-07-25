@@ -86,15 +86,6 @@ docker compose up -d db
 └── Dockerfile              # Next.js standalone 生产构建
 ```
 
-## 路线图
-
-- [x] 项目骨架搭建 (阶段 0)
-- [x] 数据模型定义 (阶段 1)
-- [ ] FastAPI RAG 检索实现 (阶段 2)
-- [ ] 多 Agent 编排 (阶段 2)
-- [ ] 流式对话 SSE (阶段 2)
-- [ ] 人格一致性测试 (阶段 5)
-- [ ] Docker 全栈部署 (阶段 6)
 
 ## 技术栈
 
@@ -104,6 +95,5 @@ docker compose up -d db
 | 可视化 | Recharts + Framer Motion |
 | 样式 | Tailwind CSS 4 |
 | AI 后端 | Python FastAPI |
-| 数据库 | PostgreSQL + pgvector |
 | Embedding | BAAI/bge-small-zh-v1.5 |
 | LLM | Claude API / GPT API |
