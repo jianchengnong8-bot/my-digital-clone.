@@ -55,3 +55,6 @@ pgdata/
 .vscode/
 *.swp
 *.swo
+
+# ===== Temp =====
+.planning/

@@ -1,6 +1,6 @@
 # 数字分身 (Digital Clone)
 
-一个基于真实人格数据驱动的 AI 数字分身系统。访客可通过人格画像、兴趣标签、人生时间线和 AI 对话，全面了解一个人的性格、爱好和人格特征。
+基于真实人格数据驱动的 AI 数字分身系统。访客可通过人格画像、兴趣标签、人生时间线和 AI 对话，全面了解一个人的性格、爱好和人格特征。
 
 ## 架构
 
@@ -16,8 +16,8 @@
 │                   │     + RAG 检索                  │
 │                   │     + 多 Agent 编排              │
 ├──────────────────┴───────────────────────────────┤
-│           PostgreSQL + pgvector                    │
-│  性格维度 │ 爱好标签 │ 人生事件 │ 对话记录         │
+│                   YAML 数据层                       │
+│  人格维度 │ 兴趣爱好 │ 人生事件 │ Prompt 模板     │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -33,6 +33,12 @@ docker compose up -d
 
 ## 本地开发
 
+### 前置条件
+
+- Node.js 20+
+- Python 3.12+
+- Docker（可选，用于容器化部署）
+
 ### 前端
 
 ```bash
@@ -45,55 +51,78 @@ npm run dev
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Windows
+venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
+
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
-```
-
-### 数据库
-
-```bash
-docker compose up -d db
 ```
 
 ## 项目结构
 
 ```
 ├── app/                    # Next.js App Router
-│   ├── (marketing)/        # 前台展示 (导航栏布局)
-│   ├── (dashboard)/        # 后台管理 (侧边栏布局)
-│   ├── api/                # API Route (BFF 代理)
+│   ├── (marketing)/        # 前台展示（导航栏布局）
+│   │   └── chat/           # AI 对话页
+│   ├── (dashboard)/        # 后台管理（侧边栏布局）
+│   │   └── admin/          # 管理概览
+│   ├── api/                # API Route（BFF 代理）
+│   │   ├── chat/           # 对话代理 → FastAPI
+│   │   └── feedback/       # 反馈代理 → FastAPI
 │   ├── layout.tsx          # 根布局
-│   └── page.tsx            # 首页
+│   └── page.tsx            # 首页（人格画像 + 时间线）
 ├── components/
-│   ├── ui/                 # 通用 UI (ScrollReveal, ThemeToggle, NavBar)
-│   ├── chart/              # 图表 (DimensionRadar)
-│   └── chat/               # 对话 (ChatPanel, ChatBubble)
+│   ├── ui/                 # 通用 UI（NavBar, ScrollReveal, ThemeToggle）
+│   ├── chart/              # 图表（DimensionRadar 雷达图）
+│   └── chat/               # 对话（ChatPanel, ChatBubble）
 ├── lib/                    # 工具函数 + 数据获取
+│   ├── utils.ts            # cn(), formatDate(), levelToStars()
+│   └── data.ts             # YAML 数据读取层
 ├── backend/                # FastAPI AI 推理层
 │   └── app/
-│       ├── api/routes/     # chat, health
-│       ├── core/           # config, database
-│       ├── agents/         # Agent 编排 (待实现)
-│       ├── retrieval/      # RAG 检索 (待实现)
+│       ├── api/routes/     # chat（SSE 流）, health
+│       ├── core/           # 配置管理
+│       ├── agents/         # Agent 编排 + Prompt 构建
+│       ├── retrieval/      # BGE Embedding + 内存向量检索
 │       └── models/         # Pydantic 数据模型
-├── data/                   # 性格数据 (YAML + Prompt 模板)
-│   ├── persona/            # 人格维度
-│   ├── interests/          # 兴趣爱好
-│   ├── timeline/           # 人生事件
-│   └── prompts/            # Prompt 模板
-├── docker-compose.yml      # PostgreSQL + FastAPI + Next.js
-└── Dockerfile              # Next.js standalone 生产构建
+├── data/                   # 人格数据（YAML + Prompt 模板）
+│   ├── persona/            # 人格维度（dimensions.yaml）
+│   ├── interests/          # 兴趣爱好（hobbies.yaml）
+│   ├── timeline/           # 人生事件（events.yaml）
+│   ├── prompts/            # Prompt 模板（system + agents）
+│   └── chat_examples.txt   # 对话风格示例
+├── docker-compose.yml      # 全栈容器编排
+├── Dockerfile              # 前端生产构建
+└── backend/Dockerfile      # 后端生产构建
 ```
-
 
 ## 技术栈
 
 | 层级 | 技术 |
-|---|---|
-| 前端框架 | Next.js 16 (App Router) |
-| 可视化 | Recharts + Framer Motion |
+|------|------|
+| 前端框架 | Next.js 16 (App Router + Turbopack) |
+| UI 动画 | Framer Motion |
+| 图表 | Recharts |
 | 样式 | Tailwind CSS 4 |
 | AI 后端 | Python FastAPI |
-| Embedding | BAAI/bge-small-zh-v1.5 |
-| LLM | Claude API / GPT API |
+| Agent 编排 | 自研（关键词意图分类 + LLM 流式） |
+| Embedding | BAAI/bge-small-zh-v1.5（384 维） |
+| 向量检索 | NumPy 内存检索（余弦相似度） |
+| LLM | DeepSeek / OpenAI（OpenAI 兼容接口） |
+
+## 路线图
+
+- [x] 项目骨架搭建
+- [x] 数据模型定义
+- [x] 人格数据录入（5 维度 + 5 兴趣 + 8 事件）
+- [x] 前端主页（雷达图 + 兴趣列表 + 时间线）
+- [x] AI 对话页（SSE 流式 + Markdown 渲染）
+- [x] FastAPI RAG 检索（BGE + NumPy 内存搜索）
+- [x] Agent 编排（意图分类 + 模式切换 + 边界检查）
+- [x] 流式对话 SSE
+- [x] Docker 全栈部署配置
+- [ ] 人格一致性自动化测试
+- [ ] GitHub Pages 静态展示版
+- [ ] 反馈收集与分析
